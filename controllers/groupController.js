@@ -1,12 +1,19 @@
 // controllers/groupController.js
 const Group = require('../models/Group');
 const Expense = require('../models/Expense');
-const { deleteModel } = require('mongoose');
 
 createGroup = async (req, res) => {
     const { name } = req.body;
     const userId = req.user.id;
+
     try {
+        // Check if a group with the same name already exists
+        const existingGroup = await Group.findOne({ name });
+        if (existingGroup) {
+            return res.status(400).json({ error: 'Group name already exists' });
+        }
+
+        // Create a new group if the name is unique
         const group = new Group({ name, admin_id: userId });
         await group.save();
         res.status(201).json({ message: 'Group created successfully' });

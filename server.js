@@ -28,7 +28,7 @@ app.get("/",(req,res)=>{
 
 // Routes for authentication
 app.use('/auth', require('./routes/authRoute'));
-app.use('/group', require('./routes/groupRoute'));
+app.use('/groups', require('./routes/groupRoute'));
 
 
 // Start the server and connect to the database
