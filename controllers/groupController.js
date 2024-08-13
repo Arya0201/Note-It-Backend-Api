@@ -1,6 +1,7 @@
 // controllers/groupController.js
 const Group = require('../models/Group');
 const Expense = require('../models/Expense');
+const User = require('../models/User');
 
 createGroup = async (req, res) => {
     const { name } = req.body;
@@ -47,15 +48,19 @@ getGroups = async (req, res) => {
 
 
 addMember = async (req, res) => {
-    const { groupId, memberId, role } = req.body;
+    const { groupId, memberEmail, role } = req.body;
     try {
         const group = await Group.findById(groupId);
         if (!group) return res.status(404).json({ error: 'Group not found' });
 
+        const user = await User.find({email:memberEmail});
+
+        if(!user) return res.status(404).json({error:'Member is not Exist'});
+        
         if (role === 'member') {
-            group.member_ids.push(memberId);
+            group.member_ids.push(user._id);
         } else if (role === 'visitor') {
-            group.visitor_ids.push(memberId);
+            group.visitor_ids.push(user._id);
         }
 
         await group.save();
