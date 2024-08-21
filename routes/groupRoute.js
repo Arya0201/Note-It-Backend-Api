@@ -13,6 +13,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 // Group-related routes
 router.post('/create', authMiddleware, createGroup);
 router.get('/groupList', authMiddleware, getGroups);
+router.put('/set-group-name',authMiddleware,setGroupName);
 router.post('/add-member', authMiddleware, addMember);
 router.put('/remove-member', authMiddleware, removeMember);
 router.delete('/:groupId', authMiddleware, deleteGroup);

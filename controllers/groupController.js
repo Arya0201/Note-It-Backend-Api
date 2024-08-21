@@ -70,6 +70,57 @@ addMember = async (req, res) => {
     }
 };
 
+setGroupName = async (req,res) => {
+    const {groupId,groupName} = req.body;
+    const userId = req.user.id;
+
+    if(!groupId || !groupName)
+    {
+        return res.status(404).json({message:"groupId or groupName should be required as input"});
+    }
+
+    try{
+        
+        const group= await Group.findById(groupId);
+
+        if(!group){
+            return res.status(404).json({message:'Group not found'});
+        }
+
+         // Check if the requesting user is the admin of the group
+         if (group.admin_id.toString() !== userId) {
+            return res.status(403).json({ message: 'You do not have permission to remove members from this group' });
+        }
+
+        // Check if the group name already exists (excluding the current group)
+        const existingGroup = await Group.findOne({ name: groupName, _id: { $ne: groupId } });
+        if (existingGroup) {
+            return res.status(409).json({ message: 'Group name already exists' });
+        }
+
+        // Update the group name
+        group.name = groupName;
+
+        // Save the updated group document
+        await group.save();
+
+         // Update the group name
+         group.name = groupName;
+
+         // Save the updated group document
+         await group.save();
+ 
+         // Respond with a success message and the updated group
+         res.status(200).json({ message: 'Group name updated successfully', group });
+
+
+    } catch(error){
+
+        res.status(500).json({ error: error.message });
+    }
+
+}
+
 removeMember = async (req, res) => {
     const { groupId, userIdToRemove } = req.body;
     const userId = req.user.id; // Extract the admin's user ID from the authenticated user's token
