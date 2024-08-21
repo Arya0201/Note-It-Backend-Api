@@ -49,18 +49,44 @@ getGroups = async (req, res) => {
 
 addMember = async (req, res) => {
     const { groupId, memberEmail, role } = req.body;
+    const userId = req.user.id;
+
+    if (!groupId || !memberEmail || !role) {
+        return res.status(404).json({ message: "Input data should be required" });
+    }
+
+
     try {
         const group = await Group.findById(groupId);
+
         if (!group) return res.status(404).json({ error: 'Group not found' });
 
-        const user = await User.find({email:memberEmail});
 
-        if(!user) return res.status(404).json({error:'Member is not Exist'});
+        const userExist = group.visitor_ids.find(id => id.toString() === userId);
+        if (userExist) return res.status(403).json({ message: 'You do not have permission to add members to this group' });
+
+
+        const user = await User.findOne({ email: memberEmail });
+        if (!user) return res.status(404).json({ error: 'Member is not Exist' });
+
+        
+         
+        if (user._id.toString() === userId) return res.status(404).json({ error: "you are allready exist in this group" });
+
         
         if (role === 'member') {
+
+            const checkUserExist = group.member_ids.find(id => id.toString() === user._id.toString());
+            if (checkUserExist) return res.status(404).json({ error: "Member is allready exist in this group" });
+
             group.member_ids.push(user._id);
+
         } else if (role === 'visitor') {
+
+            const checkUserExist = group.visitor_ids.find(id => id.toString() === user._id.toString());
+            if (checkUserExist) return res.status(404).json({ error: "Member is allready exist in this group" });
             group.visitor_ids.push(user._id);
+
         }
 
         await group.save();
@@ -70,25 +96,24 @@ addMember = async (req, res) => {
     }
 };
 
-setGroupName = async (req,res) => {
-    const {groupId,groupName} = req.body;
+setGroupName = async (req, res) => {
+    const { groupId, groupName } = req.body;
     const userId = req.user.id;
 
-    if(!groupId || !groupName)
-    {
-        return res.status(404).json({message:"groupId or groupName should be required as input"});
+    if (!groupId || !groupName) {
+        return res.status(404).json({ message: "groupId or groupName should be required as input" });
     }
 
-    try{
-        
-        const group= await Group.findById(groupId);
+    try {
 
-        if(!group){
-            return res.status(404).json({message:'Group not found'});
+        const group = await Group.findById(groupId);
+
+        if (!group) {
+            return res.status(404).json({ message: 'Group not found' });
         }
 
-         // Check if the requesting user is the admin of the group
-         if (group.admin_id.toString() !== userId) {
+        // Check if the requesting user is the admin of the group
+        if (group.admin_id.toString() !== userId) {
             return res.status(403).json({ message: 'You do not have permission to remove members from this group' });
         }
 
@@ -104,17 +129,17 @@ setGroupName = async (req,res) => {
         // Save the updated group document
         await group.save();
 
-         // Update the group name
-         group.name = groupName;
+        // Update the group name
+        group.name = groupName;
 
-         // Save the updated group document
-         await group.save();
- 
-         // Respond with a success message and the updated group
-         res.status(200).json({ message: 'Group name updated successfully', group });
+        // Save the updated group document
+        await group.save();
+
+        // Respond with a success message and the updated group
+        res.status(200).json({ message: 'Group name updated successfully', group });
 
 
-    } catch(error){
+    } catch (error) {
 
         res.status(500).json({ error: error.message });
     }
@@ -180,4 +205,4 @@ deleteGroup = async (req, res) => {
     }
 };
 
-module.exports = { createGroup, addMember ,getGroups ,removeMember,deleteGroup}
+module.exports = { createGroup, addMember, getGroups, removeMember, deleteGroup }
